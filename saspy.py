@@ -4,6 +4,9 @@ SASpy - ATSAS PLUGIN FOR PYMOL
 
 (c) 2015-2018 A.PANJKOVICH FOR ATSAS TEAM AT EMBL-HAMBURG.
 '''
+
+from __future__ import print_function
+
 import os
 import sys
 import re
@@ -11,28 +14,32 @@ import time
 import shutil
 import string
 import math
-import Tkinter
-import tkSimpleDialog
-import tkMessageBox
-import tkFileDialog
 import tempfile
 import threading
 import subprocess
 import itertools
 
+if sys.version_info[0] < 3:
+    import Tkinter
+    import tkFileDialog
+    import tkMessageBox
+else:
+    import tkinter as Tkinter
+    from tkinter import filedialog as tkFileDialog
+    import tkinter.messagebox as tkMessageBox
+
 # pymol lib
 try:
     from pymol import cmd
-    from pymol.cgo import *
 except ImportError:
-    print 'Warning: pymol library cmd not found.'
+    print('Warning: pymol library cmd not found.')
     sys.exit(1)
 
 # external lib
 try:
     import Pmw
 except ImportError:
-    print 'Warning: failed to import Pmw. Exit ...'
+    print('Warning: failed to import Pmw. Exit ...')
     sys.exit(1)
 
 ## Plugin initialization
@@ -364,17 +371,17 @@ class SASpy:
         return counter
 
     def setCrysolMode(self, mode):
-        print "Setting crysol mode to "+mode
+        print("Setting crysol mode to "+mode)
         self.crysolmode.set(mode)
         self.crymodebut.setvalue(mode)
 
     def setSasrefMode(self, mode):
-        print "Setting sasref mode to "+mode
+        print("Setting sasref mode to "+mode)
         self.sasrefmode.set(mode)
         self.sasrefmodebut.setvalue(mode)
 
     def setDatMode(self, mode):
-        print "Setting open mode to " + mode
+        print("Setting open mode to " + mode)
         global datmode
         datmode.set(mode)
         self.datmodebut.setvalue(mode)
@@ -414,7 +421,7 @@ class SASpy:
                 idx = self.atsasThreads.index(t)
                 t.join()
                 del self.atsasThreads[idx]
-                print "Just removed "+name+" from the list, with index "+repr(idx)
+                print("Just removed "+name+" from the list, with index "+repr(idx))
         return threadsAlive
 
     def submitSaspyJob(self, procType, models = []):
@@ -483,12 +490,12 @@ class SASpy:
         outputList = list();
         for m in initialList:
             if '_' in m:
-                newName = m.translate(None,"_")
+                newName = m.replace("_", "")
                 cmd.set_name(m,newName)
                 message("WARNING Renaming model \'"+m+ "\' to \'"+ newName+"\'")
                 m = newName
             if '.' in m:
-                newName = m.translate(None,".")
+                newName = m.replace(".", "")
                 cmd.set_name(m,newName)
                 message("WARNING Renaming model \'"+m+ "\' to \'"+ newName+"\'")
                 m = newName
@@ -591,7 +598,7 @@ class SASpy:
         """ Run the cmd represented by the button clicked by user.
         """
         if cmd == 'OK':
-            print 'is everything OK?'
+            print('is everything OK?')
 
         elif cmd == 'Refresh model list':
             self.refreshModelSelectionWidget()
@@ -604,7 +611,7 @@ class SASpy:
         elif cmd == 'Quit':
             self.checkAtsasThreads()
             for p in self.atsasThreads:
-                print "WARNING, a thread is still running: " + repr(p.name)
+                print("WARNING, a thread is still running: " + repr(p.name))
 
             message('Quit')
             if __name__ == '__main__':
@@ -613,9 +620,9 @@ class SASpy:
                 self.dialog.withdraw()
 
         else:
-            print 'Terminating SASpy Plugin...'
+            print('Terminating SASpy Plugin...')
             self.dialog.withdraw()
-            print 'Done.'
+            print('Done.')
 
 ##################
 # CLI Funtions
@@ -630,7 +637,7 @@ def systemCommand(command, **kwargs):
     return status
 
 def message(text):
-    print "SASpy: "+text
+    print("SASpy: "+text)
     return
 
 def getPlural(n):
@@ -657,7 +664,7 @@ def writePdb(sel, prefix = ""):
     pdbfn = prefix + sel + ".pdb"
     npdbfn = pdbfn.replace(" or ", "");
     npdbfn = npdbfn.replace(" and ", "");
-    npdbfn = npdbfn.translate(None, string.whitespace)
+    npdbfn = "".join(c for c in npdbfn if c not in string.whitespace)
     cmd.save(npdbfn, sel)
     return npdbfn
 
@@ -676,7 +683,7 @@ def parseCrysolLog (logFileName):
         for line in rf:
             counter += 1
             if re.match("(.*)Fitting parameters(.*)", line):
-                print "line number: " + repr(counter)
+                print("line number: " + repr(counter))
                 position = counter + 2
             if counter == position:
                 if line[66:73] != "*******":
@@ -739,6 +746,7 @@ def checkAtsasVersion():
     output = "emtpy"
     try: 
         output = subprocess.check_output(["crysol", "-v"], 
+                universal_newlines=True,
         stdin=DEVNULL, stderr=subprocess.STDOUT)
     except OSError as e:
        return "NOBIN"
@@ -1096,7 +1104,7 @@ def sasref(SaxsDataFileName, models = [], mode = 'local', viewer='primus'):
             #tmpdir.copy_in(m, pdbtmpfn);
             #compute amplitudes
             systemCommand(["crysol"] + ["-p"] + [fid] + [pdbtmpfn])
-            print "computed alm for : "+ fid +"\n"
+            print("computed alm for : "+ fid +"\n")
             sc += fid+".alm"+"! subunit " +repr(count)+" amplitudes\n"
             sc += "0.0     ! Initial rotation by alpha\n"
             sc += "0.0     ! Initial rotation by beta\n"
